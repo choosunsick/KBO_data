@@ -14,21 +14,38 @@
 
 저희가 수집하고 가공한 자료는 약 7년 치의 한국 프로야구 데이터가 있기에 특정팀의 연도에 따른 연속적인 변화나 7년의 기간의 최대 득점 경기 혹은 포스트 시즌에 올라간 팀 목록 등을 확인할 수 있습니다. 또한, 점수와 홈팀, 원정팀 구분하여 경기정보를 쉽게 확인해 볼 수 있으며 다양한 기록들을 시각화해볼 수 있습니다.
 
-
-시각화에 대하여 예를 들어 보자면 9개의 팀들이 홈에서 어떤 원정팀을 만났을 때 평균적으로 낸 점수들을 그려 볼 수 있습니다.
+# 사용법
 
 ```
-temp <- subset(KBO_Total,KBO_Total$비고=="정규시즌") ## 정규시즌만 뽑아줍니다
+## 경기 결과열을 만들어 줍니다.
 
-home.agg <- aggregate(홈팀점수 ~ 홈팀+원정팀,temp,mean) ## 원정팀 별 홈팀들의 평균 점수를 만듭니다.
+kbo_total$경기결과  <- ifelse(kbo_total$홈팀점수>kbo_total$원정팀점수,"홈팀승",ifelse(kbo_total$홈팀점수<kbo_total$원정팀점수,"원정팀승","무"))
 
-theme_set(theme_gray(base_family='NanumGothic')) ##  ggplot에서 한글을 보이게 하기 위함입니다.
+## 정규시즌만 뽑아 줍니다.
 
-## 마지막으로 각 원정팀에 대하여 홈팀들이 어느정도의 평균점수를 냈는지 시각화 해봅니다.
+temp <- subset(kbo_total,kbo_total$비고=="정규시즌")
 
-ggplot(home.agg,aes(x=홈팀,y=홈팀점수,fill=원정팀))+geom_bar(stat="identity",colour = "black")+
+## 홈팀의 경기 수를 경기 결과별로 분류해줍니다.
+home.agg <-aggregate(홈팀점수~홈팀+경기결과,temp,length)
+hometeam_win <- temp.agg[home.agg$경기결과=="홈팀승",]
+
+## 원정팀의 경기 수를 경기 결과별로 분류해줍니다.
+away.agg <-aggregate(원정팀점수~원정팀+경기결과,temp,length)
+awayteam_win <- away.agg[away.agg$경기결과=="원정팀승",]
+
+## 홈팀일 때 승리가 많은 순서대로 나열한 그래프를 그립니다.
+ggplot(hometeam_win,aes(x=홈팀,y=홈팀점수,fill=경기결과))+geom_bar(stat="identity",colour = "black")+
+scale_x_discrete(limits=c("삼성", "넥센", "두산", "롯데", "SK", "LG", "KIA", "한화", "NC","kt"  ))+
 theme(axis.text.x= element_text(angle=90, hjust=1))+
-facet_wrap(~원정팀)
+geom_text(aes(y=홈팀점수,label=홈팀점수),size=4,vjust=1.5)+
+facet_wrap(~경기결과)
+
+## 원정팀일 때 승리가 많은 순서대로 나열한 그래프를 그립니다.
+ggplot(awayteam_win ,aes(x=원정팀,y=원정팀점수,fill=경기결과))+geom_bar(stat="identity",colour = "black")+
+scale_x_discrete(limits=c("삼성", "두산", "SK", "넥센", "LG", "KIA",  "롯데", "한화", "NC", "kt"))+
+theme(axis.text.x= element_text(angle=90, hjust=1))+
+geom_text(aes(y=원정팀점수,label=원정팀점수),size=4,vjust=1.5)+
+facet_wrap(~경기결과)
 
 ```
 
