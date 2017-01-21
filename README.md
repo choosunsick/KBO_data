@@ -19,57 +19,56 @@
 저희가 수집하고 가공한 자료는 약 7년 치의 한국 프로야구 데이터가 있습니다. 따라서 특정팀의 연도에 따른 연속적인 변화나 7년 동안의 최대 득점 경기 혹은 포스트 시즌에 올라간 팀 목록 등을 확인할 수 있습니다. 또한, 점수와 홈 & 원정팀, 시즌정보 등을 구분하여 경기정보를 쉽게 확인해 볼 수 있으며 다양한 기록들을 시각화해볼 수 있습니다.
 
 
-# 사용법
+# 응용사례
 
 ```
 ## 경기 결과열을 만들어 줍니다.
 
-kbo_total$경기결과  <- ifelse(kbo_total$홈팀점수>kbo_total$원정팀점수,"홈팀승",ifelse(kbo_total$홈팀점수<kbo_total$원정팀점수,"원정팀승","무"))
+kbo_total$경기결과  <- ifelse(kbo_total$홈팀점수>kbo_total$원정팀점수,"홈승",ifelse(kbo_total$홈팀점수<kbo_total$원정팀점수,"원정승","무"))
+
 
 ## 정규시즌만 뽑아 줍니다.
 
-temp <- subset(kbo_total,kbo_total$비고=="정규시즌")
-doosan <- subset(temp,temp$홈팀=="두산"|temp$원정팀=="두산")
+normal_season <- subset(kbo_total,kbo_total$비고=="정규시즌")
+doosan <- subset(normal_season,normal_season$홈팀=="두산"|normal_season$원정팀=="두산")
 
 
-## 홈팀의 경기 수를 경기 결과별로 분류해줍니다.
+## 홈팀과 원정팀의 경기 수를 경기결과에 따라 분류합니다.
 
-temp <- aggregate(홈팀점수~홈팀+원정팀+경기결과,doosan,length)
-doosan_home <- temp[temp$홈팀=="두산",]
-doosan_home_win <- doosan_home[doosan_home$경기결과=="홈팀승",]
+home <- aggregate(홈팀점수~홈팀+원정팀+경기결과,doosan,length)
+doosan_home <- home[home$홈팀=="두산",]
 
-
-## 원정팀의 경기 수를 경기 결과별로 분류해줍니다.
-
-temp <- aggregate(원정팀점수~홈팀+원정팀+경기결과,doosan,length)
-doosan_away <- temp[temp$원정팀=="두산",]
-doosan_away_win <- doosan_home[doosan_home$경기결과=="원정팀승",]
+away <- aggregate(원정팀점수~홈팀+원정팀+경기결과,doosan,length)
+doosan_away <- away[away$원정팀=="두산",]
 
 
-## 이긴 횟수와 진횟수가 많은 순서의 팀 배열을 찾습니다.
+## 두산이 홈일 때와 원정일 때의 승리만 따로 뽑아줍니다.
 
-doosan_home_win$원정팀[order(doosan_home_win$홈팀점수,decreasing = TRUE)]
-doosan_away_win$원정팀[order(doosan_away_win$홈팀점수,decreasing = TRUE)]
-
-## 홈팀일 때 승리가 많은 순서대로 나열한 그래프를 그립니다.
-
-p <- ggplot(doosan_home_win,aes(x=원정팀,y=홈팀점수))+
-geom_bar(stat="identity",colour = "black",fill="green")+
-scale_x_discrete(limits=c("KIA", "한화", "넥센", "롯데", "LG","SK", "삼성", "NC","kt"))+
-theme(axis.text.x= element_text(angle=90, hjust=1))+
-geom_text(aes(y=홈팀점수,label=홈팀점수),size=4,vjust=1.5)
-
-p+labs(title="두산_상대전적그래프")+ylab("이긴횟수")
+doosan_home_win <- doosan_home[doosan_home$경기결과=="홈승",]
+doosan_away_win <- doosan_away[doosan_away$경기결과=="원정승",]
 
 
-## 원정팀일 때 승리가 많은 순서대로 나열한 그래프를 그립니다.
+## 두산의 열이 중복되므로 지워줍니다.
 
-p <- ggplot(doosan_away_win,aes(x=원정팀,y=홈팀점수))+
-    geom_bar(stat="identity",colour = "black",fill="green")+
-    scale_x_discrete(limits=c("삼성","SK", "롯데", "LG", "넥센", "한화", "KIA", "NC","kt" ))+
-    geom_text(aes(y=홈팀점수,label=홈팀점수),size=4,vjust=1.5)
+doosan_home_win <- doosan_home_win[,-1]
+doosan_away_win <- doosan_away_win[,-2]
 
- p+labs(title="두산_상대전적그래프")+ylab("진횟수")
+
+## 하나의 자료로 만들어 줍니다.
+
+colnames(doosan_home_win) <- c("상대팀","경기결과","승리횟수")
+colnames(doosan_away_win) <- c("상대팀","경기결과","승리횟수")
+
+doosan_win <- rbind(doosan_home_win,doosan_away_win)  
+
+## 이제 두산의 상대전적(승리)그래프를 그려봅시다.
+
+p <- ggplot(doosan_win,aes(x=상대팀,y=승리횟수,fill= 경기결과))+
+geom_bar(stat="identity",colour = "black")+
+scale_x_discrete(limits=c("한화","KIA", "SK", "LG", "넥센", "삼성", "롯데", "NC","kt" ))+
+theme(axis.text.x= element_text(angle=90, hjust=1))
+
+p+labs(title="두산상대전적그래프")
 
 ```
 
