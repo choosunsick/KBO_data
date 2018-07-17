@@ -16,7 +16,7 @@
 
 # 응용사례
 
-```
+```r
 ## 경기 결과열을 만들어 줍니다.
 
 kbo_total$경기결과  <- ifelse(kbo_total$홈팀점수>kbo_total$원정팀점수,"홈승",ifelse(kbo_total$홈팀점수<kbo_total$원정팀점수,"원정승","무"))
